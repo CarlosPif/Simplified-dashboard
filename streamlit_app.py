@@ -1,9 +1,13 @@
 import streamlit as st
 import pandas as pd
 from pyairtable import Api
+from PIL import Image
+import plotly.express as px
 import plotly.graph_objects as go
 from collections import defaultdict
 import numpy as np
+import re
+import streamlit.components.v1 as components
 
 id_to_name = {
     "2": "Heuristik",
