@@ -311,51 +311,21 @@ def render_flags_by_mentor(row):
 render_flags_by_mentor(row)
 
 st.markdown("""
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+    .print-btn {
+        background-color: #0b6abf;
+        color: white;
+        padding: 0.6rem 1.2rem;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 1rem;
+    }
+    .print-btn:hover {
+        background-color: #095a9c;
+    }
+</style>
 
-    <style>
-        #savepdf {
-            background-color: #0b6abf;
-            color: white;
-            padding: 0.6rem 1.2rem;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 30px;
-        }
-    </style>
-
-    <button id="savepdf">⬇️ Descargar esta página en PDF</button>
-
-    <script>
-    const { jsPDF } = window.jspdf;
-
-    document.getElementById("savepdf").addEventListener("click", function () {
-        const body = document.body;
-        html2canvas(body, { scale: 2, useCORS: true }).then(canvas => {
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            const imgHeight = canvas.height * pageWidth / canvas.width;
-
-            let heightLeft = imgHeight;
-            let position = 0;
-
-            pdf.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft > 0) {
-                position -= pageHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-
-            pdf.save("feedback-decelera.pdf");
-        });
-    });
-    </script>
+<button class="print-btn" onclick="window.print()">🖨️ Guardar/Imprimir como PDF</button>
 """, unsafe_allow_html=True)
