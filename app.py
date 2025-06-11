@@ -153,7 +153,7 @@ JUDGE_NAMES = [
     "Alejandro Lopez", "Alex Barrera", "Álvaro Dexeus", "Anastasia Dedyukhina",
     "Andrea Klimowitz", "Anna  Fedulow", "Bastien  Pierre Jean Gambini",
     "Beth Susanne", "David Beratech", "Elise Mitchell", "Esteban Urrea",
-    "Fernando Cabello-Astolfi", "Gennaro Bifulco", "Ivan Alaiz", "Ivan Nabalon",
+    "Fernando Cabello", "Gennaro Bifulco", "Ivan Alaiz", "Ivan Nabalon",
     "Ivan Peña", "Jair Halevi", "Jason Eckenroth", "Javier Darriba",
     "Juan Pablo Tejela", "Laura Montells", "Manel Adell", "Oscar Macia",
     "Paul Ford", "Pedro Claveria", "Philippe Gelis", "Ranny Nachmais",
