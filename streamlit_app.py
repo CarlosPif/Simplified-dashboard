@@ -190,7 +190,7 @@ with first_col2:
         "Execution and speed": row.get("Execution and speed | Average"),
         "Team ambition": row.get("Team ambition | Average"),
         "Confidence and mutual respect": row.get("Confidence and mutual respect | Average"),
-        "Product and customer focus": row.get("Product and customer focus | Average")
+        "Product and customer focus": row.get("Product and Customer focus | Average")
     }
 
     team_df = pd.DataFrame.from_dict(team_scores, orient="index", columns=["Score"]).reset_index()
@@ -347,7 +347,7 @@ def render_flags_by_mentor(row):
     color_to_emoji = {"green": "🟢", "yellow": "🟡", "red": "🔴"}
 
     for mentor in sorted(grouped):
-        st.markdown(f"### 👤 **{mentor}**")
+        st.markdown(f"#### 👤 **{mentor}**")
         scores = extract_mentor_scores(row).get(mentor, {})
 
         for color in ["red", "yellow", "green"]:
@@ -356,7 +356,7 @@ def render_flags_by_mentor(row):
                 continue
 
             emoji = color_to_emoji.get(color, "⚪️")
-            st.markdown(f"{emoji} **{color.capitalize()} Flag**")
+            st.markdown(f"<span style="color: {color}>{color.capitalized()} Flag</span>")
 
             # Agrupar y mostrar todo como lista
             all_formatted = []
