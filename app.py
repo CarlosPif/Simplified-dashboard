@@ -139,13 +139,6 @@ def flag_color(text):
             return "🟢"
     return "⚪️"
 
-compact_row("🧪 Scientific Results", {
-    "BRS": str(brs_calc),
-    "GRIT": str(gr_calc),
-    "Exhaustion": f"{flag_color(olbi_ex)} {olbi_ex}",
-    "Disengagement": f"{flag_color(olbi_dis)} {olbi_dis}"
-})
-
 st.markdown("##### 🚩 EM's Feedback")
 
 JUDGE_NAMES = [
@@ -309,6 +302,13 @@ def render_flags_by_mentor(row):
             st.markdown(", ".join(all_formatted))
 
 render_flags_by_mentor(row)
+
+compact_row("🧪 Scientific Results", {
+    "BRS": str(brs_calc),
+    "GRIT": str(gr_calc),
+    "Exhaustion": f"{flag_color(olbi_ex)} {olbi_ex}",
+    "Disengagement": f"{flag_color(olbi_dis)} {olbi_dis}"
+})
 
 st.markdown("""
 <style>
