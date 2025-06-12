@@ -139,6 +139,8 @@ if filtered.empty:
 row = filtered.iloc[0]
 
 # =========Primera fila de arañas============
+st.title("Bussiness DD", align='center')
+
 col1, col2 = st.columns([1, 1])
 
 with col2:
