@@ -139,7 +139,7 @@ if filtered.empty:
 row = filtered.iloc[0]
 
 # =========Primera fila de arañas============
-col1, col2, col3 = st.columns([1, 1])
+col1, col2 = st.columns([1, 1])
 
 with col2:
     averages_rr = {
