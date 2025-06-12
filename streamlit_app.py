@@ -123,25 +123,6 @@ df = df.applymap(fix_cell)
 df = df[df["Id"].notna()]
 df["Id"] = df["Id"].astype(str)
 
-# representacion de arañas
-def radar_chart(scores, labels, title):
-    fig = go.Figure()
-    fig.add_trace(go.Scatterpolar(
-        r=scores + [scores[0]],
-        theta=labels + [labels[0]],
-        fill='toself',
-        name=title
-    ))
-    fig.update_layout(
-        polar=dict(
-            radialaxis=dict(visible=True, range=[0, 4])
-        ),
-        showlegend=False,
-        height=450,
-        title=title
-    )
-    return fig
-
 # Dropdown de st's
 valid_ids = [id_ for id_ in df["Id"].unique() if id_ in id_to_name]
 selected_id = st.selectbox(
@@ -158,11 +139,23 @@ if filtered.empty:
 row = filtered.iloc[0]
 
 # =========Primera fila de arañas============
-first_col1, first_col2, first_col3 = st.columns(3)
+col1, col2, col3 = st.columns([1, 1])
 
-with first_col1:
+with col2:
+    averages_rr = {
+        "State of development": df["Average RISK | State of development_Score"].mean(),
+        "Momentum": df["Average RISK | Momentum_Score"].mean(),
+        "Management": df["Average RISK | Management_Score"].mean(),
+        "Market": df["Average Reward | Market_Score"].mean(),
+        "Team": df["Average Reward | Team_Score"].mean(),
+        "Pain": df["Average Reward | Pain_Score"].mean(),
+        "Scalability": df["Average Reward | Scalability_Score"].mean()
+    }
+    averages_rr_df = pd.DataFrame.from_dict(averages_rr, orient="index", columns=["Score"]).reset_index()
+    averages_rr_df.columns = ["Category", "Score"]
+
     risk_reward_scores = {
-        "Sate of development": row.get("Average RISK | State of development_Score",0),
+        "State of development": row.get("Average RISK | State of development_Score",0),
         "Momentum": row.get("Average RISK | Momentum_Score", 0),
         "Management": row.get("Average RISK | Management_Score", 0),
         "Market": row.get("Average Reward | Market_Score", 0),
@@ -173,197 +166,250 @@ with first_col1:
     risk_reward_df = pd.DataFrame.from_dict(risk_reward_scores, orient="index", columns=["Score"]).reset_index()
     risk_reward_df.columns = ["Category", "Score"]
 
-st.plotly_chart(
-    radar_chart(
-        risk_reward_df["Score"].tolist(),
-        risk_reward_df["Category"].tolist(),
-        "Risk/Reward Analysis"
+    # Normaliza las categorías
+    risk_reward_df["Category"] = risk_reward_df["Category"].str.strip().str.lower()
+    averages_rr_df["Category"] = averages_rr_df["Category"].str.strip().str.lower()
+
+    # Elimina duplicados si los hubiera (conserva el primero)
+    risk_reward_df = risk_reward_df.drop_duplicates(subset="Category")
+    averages_rr_df = averages_rr_df.drop_duplicates(subset="Category")
+
+    # Reordena el promedio para que siga el orden de risk_reward_df
+    averages_rr_df = averages_rr_df.set_index("Category").reindex(risk_reward_df["Category"]).reset_index()
+
+    # Verifica que no haya valores NaN en scores (esto puede romper el gráfico)
+    if risk_reward_df["Score"].isnull().any() or averages_rr_df["Score"].isnull().any():
+        raise ValueError("Hay valores NaN en las columnas de Score. Revisa tus datos.")
+
+    # Construye el gráfico
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatterpolar(
+        r=risk_reward_df["Score"].tolist() + [risk_reward_df["Score"].iloc[0]],
+        theta=risk_reward_df["Category"].tolist() + [risk_reward_df["Category"].iloc[0]],
+        fill='toself',
+        name="Risk & Reward",
+    ))
+    fig.add_trace(go.Scatterpolar(
+        r=averages_rr_df["Score"].tolist() + [averages_rr_df["Score"].iloc[0]],
+        theta=averages_rr_df["Category"].tolist() + [averages_rr_df["Category"].iloc[0]],
+        fill='toself',
+        name="Average",
+        line=dict(color='orange'),
+        fillcolor='rgba(255,265,0,0.4)'
+    ))
+
+    fig.update_layout(
+        polar=dict(
+            angularaxis=dict(
+                tickfont=dict(size=11),
+                rotation=90,
+                direction="clockwise"
+            ),
+            radialaxis=dict(
+                visible=True,
+                range=[0, 4],
+                tickfont=dict(size=10)
+            )
+        ),
+        margin=dict(l=40, r=40, t=60, b=40),
+        height=450,
+        title=dict(
+            text="Risk & Reward Scores",
+            x=0.5,              # Centra horizontalmente
+            xanchor="center",   # Alinea con el centro
+            font=dict(size=18, family="Arial", color="black")
+        ),
+        showlegend=True,
+        legend=dict(
+            orientation='h',
+            yanchor='top',
+            y=-0.2,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=11)
+        )
     )
-)
+    st.plotly_chart(fig)
 
-with first_col2:
-    team_scores = {
-        "Conflict resolution": row.get("Conflict resolution | Average"),
-        "Clear vision alignment": row.get("Clear vision alignment | Average"),
-        "Clear roles": row.get("Clear roles | Average"),
-        "Complementary hard skills": row.get("Complementary hard skills | Average"),
-        "Execution and speed": row.get("Execution and speed | Average"),
-        "Team ambition": row.get("Team ambition | Average"),
-        "Confidence and mutual respect": row.get("Confidence and mutual respect | Average"),
-        "Product and customer focus": row.get("Product and Customer focus | Average")
-    }
-
-    team_df = pd.DataFrame.from_dict(team_scores, orient="index", columns=["Score"]).reset_index()
-    team_df.columns = ["Category", "Score"]
-
-    st.plotly_chart(
-    radar_chart(
-        team_df["Score"].tolist(),
-        team_df["Category"].tolist(),
-        "Human Due Diligence (Team)"
-    )
-)
-
-with first_col3:
+with col1:
     JUDGE_NAMES = [
     "Jorge Gonzalez-Iglesias", "Juan de Antonio", "Adam Beguelin",
     "Alejandro Lopez", "Alex Barrera", "Álvaro Dexeus", "Anastasia Dedyukhina",
     "Andrea Klimowitz", "Anna  Fedulow", "Bastien  Pierre Jean Gambini",
-    "Beth Susanne", "David Beratech", "Elise Mitchell", "Esteban Urrea",
+    "Beth Susanne", "David Baratech", "Elise Mitchell", "Esteban Urrea",
     "Fernando Cabello", "Gennaro Bifulco", "Ivan Alaiz", "Ivan Nabalon",
-    "Ivan Peña", "Jair Halevi", "Jason Eckenroth", "Javier Darriba",
+    "Ivan Peña", "Jair Halevi", "Juan Pablo y Laura", "Jason Eckenroth", "Javier Darriba",
     "Juan Pablo Tejela", "Laura Montells", "Manel Adell", "Oscar Macia",
     "Paul Ford", "Pedro Claveria", "Philippe Gelis", "Ranny Nachmais",
-    "Rebeca De Sancho", "Rui Fernandes", "Sean Cook", "Shadi  Yazdan",
+    "Rebeca De Sancho", "Rui Fernandes", "Sean Cook", "Shadi Yazdan",
     "Shari Swan", "Stacey  Ford", "Sven  Huber", "Torsten Kolind", "Jaime", "John Varuguese", "Elise Mitchel"
-]
-
-# --- 2. Simple HTML cleaner (unchanged) ------------------------------------
-_HTML_BREAK_RE = re.compile(r"<br\s*/?>", flags=re.I)
-
-def _clean_html(raw: str) -> str:
-    if not isinstance(raw, str):
-        return raw or ""
-    txt = _HTML_BREAK_RE.sub("\n", raw)
-    txt = txt.replace("**", "")
-    return txt.strip()
-
-# --- 3. Updated NAME regex --------------------------------------------------
-# It matches a judge name followed by EITHER:
-#   • end-of-string
-#   • whitespace
-#   • a capital letter (for “State”, “Momentum”…), a colon, or a newline
-CATS = [
-    "State of development", "Momentum", "Management",
-    "Market", "Team", "Pain", "Scalability",
-]
-
-# === Expresión regular para categorías (con ":")
-_CAT_RE = re.compile(r"(" + "|".join(map(re.escape, CATS)) + r")\s*:", flags=re.I)
-
-# === Expresión regular para nombres de mentor
-_NAME_RE = re.compile(
-    r"(" + "|".join(re.escape(n) for n in JUDGE_NAMES) + r")(?=$|\s|[A-Z])",
-    flags=re.I
-)
-
-def extract_mentor_scores(row) -> dict[str, dict[str, float]]:
-    mentor_scores = defaultdict(dict)
-
-    for cat in CATS:
-        field_name = f"{cat} | Mentor Scores"
-        raw = row.get(field_name)
-        if not raw:
-            continue
-        entries = normalize_list(raw)
-        for entry in entries:
-            parts = [p.strip() for p in entry.split(",")]
-            for p in parts:
-                if ": " in p:
-                    name, score = p.split(": ")
-                    try:
-                        mentor_scores[name.strip()][cat.lower()] = float(score.strip())
-                    except ValueError:
-                        continue
-    return mentor_scores
-
-# === Formatea texto con puntuaciones del mentor
-def _format_categories(text: str, scores: dict[str, float] | None = None) -> str:
-    text = _clean_html(text)
-    matches = list(_CAT_RE.finditer(text))
-    if not matches:
-        return text.strip()
-
-    out = []
-
-    if matches[0].start() > 0:
-        out.append(text[:matches[0].start()].strip())
-
-    for idx, match in enumerate(matches):
-        label = match.group(1).strip()
-        key = label.lower()
-        start = match.end()
-        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
-        body = text[start:end].strip()
-
-        score = scores.get(key) if scores else None
-        score_text = f" ({score:.2f})" if score is not None and pd.notna(score) else ""
-        out.append(f"**{label}{score_text}:** {body}")
-
-    return ", ".join(out)
-
-# === Extrae (mentor, comentario sin procesar) desde string largo
-def _group_by_mentor(raw: str) -> list[tuple[str, str]]:
-    text = _clean_html(raw)
-    hits = list(_NAME_RE.finditer(text))
-
-    if not hits:
-        yield "Anonymous", text.strip()
-        return
-
-    for idx, hit in enumerate(hits):
-        mentor = hit.group(1).strip()
-        start = hit.end()
-        end = hits[idx + 1].start() if idx + 1 < len(hits) else len(text)
-        comment = text[start:end].lstrip(' :–').strip()
-        if comment:
-            yield mentor, comment
-
-# === Junta todas las banderas (green/yellow/red) para cada mentor
-def collect_flag_records(row):
-    flag_fields = [
-        ("RISK | Green_exp",   "green"),
-        ("RISK | Yellow_exp",  "yellow"),
-        ("RISK | Red_exp",     "red"),
-        ("Reward | Green_exp", "green"),
-        ("Reward | Yellow_exp","yellow"),
-        ("Reward | Red_exp",   "red"),
     ]
 
-    records = []
-    for field, color in flag_fields:
-        for raw in normalize_list(row.get(field, [])):
-            for mentor, raw_comment in _group_by_mentor(raw):
-                records.append((mentor, color, raw_comment))
-    return records
+    # --- 2. Simple HTML cleaner (unchanged) ------------------------------------
+    _HTML_BREAK_RE = re.compile(r"<br\s*/?>", flags=re.I)
 
-# === Pinta cada mentor y su lista de flags con puntuaciones
-st.markdown("#### 🚩 EM's Feedback")
-def render_flags_by_mentor(row):
+    def _clean_html(raw: str) -> str:
+        if not isinstance(raw, str):
+            return raw or ""
+        txt = _HTML_BREAK_RE.sub("\n", raw)
+        txt = txt.replace("**", "")
+        return txt.strip()
 
-    mentor_scores = extract_mentor_scores(row)
-    records = collect_flag_records(row)
+    # --- 3. Updated NAME regex --------------------------------------------------
+    # It matches a judge name followed by EITHER:
+    #   • end-of-string
+    #   • whitespace
+    #   • a capital letter (for “State”, “Momentum”…), a colon, or a newline
+    CATS = [
+        "State of development", "Momentum", "Management",
+        "Market", "Team", "Pain", "Scalability",
+    ]
 
-    if not records:
-        st.markdown("_No hay feedback para este startup._")
-        return
+    # === Expresión regular para categorías (con ":")
+    _CAT_RE = re.compile(r"(" + "|".join(map(re.escape, CATS)) + r")\s*:", flags=re.I)
 
-    # Agrupar por mentor y color
-    grouped = defaultdict(lambda: defaultdict(list))  # mentor → color → [raw_text]
+    # === Expresión regular para nombres de mentor
+    _NAME_RE = re.compile(
+        r"(" + "|".join(re.escape(n) for n in JUDGE_NAMES) + r")(?=$|\s|[A-Z])",
+        flags=re.I
+    )
 
-    for mentor, color, raw_comment in records:
-        grouped[mentor][color].append(raw_comment)
+    def extract_mentor_scores(row) -> dict[str, dict[str, float]]:
+        mentor_scores = defaultdict(dict)
 
-    color_to_emoji = {"green": "🟢", "yellow": "🟡", "red": "🔴"}
-
-    for mentor in sorted(grouped):
-        st.markdown(f"#### 👤 **{mentor}**")
-        scores = extract_mentor_scores(row).get(mentor, {})
-
-        for color in ["red", "yellow", "green"]:
-            comments = grouped[mentor].get(color, [])
-            if not comments:
+        for cat in CATS:
+            field_name = f"{cat} | Mentor Scores"
+            raw = row.get(field_name)
+            if not raw:
                 continue
+            entries = normalize_list(raw)
+            for entry in entries:
+                parts = [p.strip() for p in entry.split(",")]
+                for p in parts:
+                    if ": " in p:
+                        name, score = p.split(": ")
+                        try:
+                            mentor_scores[name.strip()][cat.lower()] = float(score.strip())
+                        except ValueError:
+                            continue
+        return mentor_scores
 
-            emoji = color_to_emoji.get(color, "⚪️")
-            st.markdown(f"<span style="color: {color}>{color.capitalized()} Flag</span>")
+    # === Formatea texto con puntuaciones del mentor
+    def _format_categories(text: str, scores: dict[str, float] | None = None) -> str:
+        text = _clean_html(text)
+        matches = list(_CAT_RE.finditer(text))
+        if not matches:
+            return text.strip()
 
-            # Agrupar y mostrar todo como lista
-            all_formatted = []
-            for comment in comments:
-                formatted = _format_categories(comment, scores=scores)
-                all_formatted.append(formatted)
+        out = []
 
-            st.markdown(", ".join(all_formatted))
+        if matches[0].start() > 0:
+            out.append(text[:matches[0].start()].strip())
 
-render_flags_by_mentor(row)
+        for idx, match in enumerate(matches):
+            label = match.group(1).strip()
+            key = label.lower()
+            start = match.end()
+            end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
+            body = text[start:end].strip()
+
+            score = scores.get(key) if scores else None
+            score_text = f" ({score:.2f})" if score is not None and pd.notna(score) else ""
+            out.append(f"**{label}{score_text}:** {body}")
+
+        return ", ".join(out)
+
+    # === Extrae (mentor, comentario sin procesar) desde string largo
+    def _group_by_mentor(raw: str) -> list[tuple[str, str]]:
+        text = _clean_html(raw)
+        hits = list(_NAME_RE.finditer(text))
+
+        if not hits:
+            yield "Anonymous", text.strip()
+            return
+
+        for idx, hit in enumerate(hits):
+            mentor = hit.group(1).strip()
+            start = hit.end()
+            end = hits[idx + 1].start() if idx + 1 < len(hits) else len(text)
+            comment = text[start:end].lstrip(' :–').strip()
+            if comment:
+                yield mentor, comment
+
+    # === Junta todas las banderas (green/yellow/red) para cada mentor
+    def collect_flag_records(row):
+        flag_fields = [
+            ("RISK | Green_exp",   "green"),
+            ("RISK | Yellow_exp",  "yellow"),
+            ("RISK | Red_exp",     "red"),
+            ("Reward | Green_exp", "green"),
+            ("Reward | Yellow_exp","yellow"),
+            ("Reward | Red_exp",   "red"),
+        ]
+
+        records = []
+        for field, color in flag_fields:
+            for raw in normalize_list(row.get(field, [])):
+                for mentor, raw_comment in _group_by_mentor(raw):
+                    records.append((mentor, color, raw_comment))
+        return records
+
+    # === Pinta cada mentor y su lista de flags con puntuaciones
+    st.markdown("#### 🚩 EM's Feedback")
+
+    def render_flags_by_mentor(row, start, limit):
+
+        mentor_scores = extract_mentor_scores(row)
+        records = collect_flag_records(row)
+
+        if not records:
+            st.markdown("_No hay feedback para este startup._")
+            return
+
+        # Agrupar por mentor y color
+        grouped = defaultdict(lambda: defaultdict(list))  # mentor → color → [raw_text]
+
+        for mentor, color, raw_comment in records:
+            grouped[mentor][color].append(raw_comment)
+
+        color_to_emoji = {"green": "🟢", "yellow": "🟡", "red": "🔴"}
+
+        j = 0
+        for mentor in sorted(grouped)[start:]:
+            st.markdown(f"###### 👤 **{mentor}**")
+            scores = extract_mentor_scores(row).get(mentor, {})
+
+            for color in ["red", "yellow", "green"]:
+                comments = grouped[mentor].get(color, [])
+                if not comments:
+                    continue
+
+                emoji = color_to_emoji.get(color, "⚪️")
+
+                # Agrupar y mostrar todo como lista
+                all_formatted = []
+                for comment in comments:
+                    formatted = _format_categories(comment, scores=scores)
+                    all_formatted.append(formatted)
+
+                st.markdown(f"{emoji}" + ", ".join(all_formatted))
+
+            j += 1
+            if j == limit:
+                break
+
+    render_flags_by_mentor(row, 0, 1)
+
+render_flags_by_mentor(row, 1, limit=None)
+
+team_scores = {
+    "Conflict resolution": row.get("Conflict resolution | Average"),
+    "Clear vision alignment": row.get("Clear vision alignment | Average"),
+    "Clear roles": row.get("Clear roles | Average"),
+    "Complementary hard skills": row.get("Complementary hard skills | Average"),
+    "Execution and speed": row.get("Execution and speed | Average"),
+    "Team ambition": row.get("Team ambition | Average"),
+    "Confidence and mutual respect": row.get("Confidence and mutual respect | Average"),
+    "Product and customer focus": row.get("Product and Customer Focus | Average")
+}
