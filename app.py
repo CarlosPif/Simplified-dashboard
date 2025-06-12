@@ -140,9 +140,9 @@ if filtered.empty:
 row = filtered.iloc[0]
 
 #======================Comenzamos con Individual========================
+
 individual_columns = [
     "Purpose | Average",
-    "Openness | Average",
     "Integrity and honesty | Average",
     "Relevant experience | Average",
     "Visionary leadership | Average",
@@ -152,9 +152,6 @@ individual_columns = [
 
 table_purp = normalize_list(row.get("Purpose | Founder & Score", []))
 tags_purp = [p.strip() for entry in table_purp for p in entry.split(", ")]
-
-table_open = normalize_list(row.get("Openness | Founder & Score", []))
-tags_open = [p.strip() for entry in table_open for p in entry.split(", ")]
 
 table_int = normalize_list(row.get("Integrity and honesty | Founder & Score", []))
 tags_int = [p.strip() for entry in table_int for p in entry.split(", ")]
@@ -171,8 +168,8 @@ tags_flex = [p.strip() for entry in table_flex for p in entry.split(", ")]
 table_emo = normalize_list(row.get("Emotional intelligence | Founder & Score", []))
 tags_emo = [p.strip() for entry in table_emo for p in entry.split(", ")]
 
-list_hum = [tags_purp, tags_open, tags_int, tags_rel, tags_vis, tags_flex, tags_emo]
-campos_hum = ["Purpose", "Openness", "Integrity and honesty", "Relevant experience", "Visionary leadership", "Flexibility", "Emotional intelligence"]
+list_hum = [tags_purp, tags_int, tags_rel, tags_vis, tags_flex, tags_emo]
+campos_hum = ["Purpose", "Integrity and honesty", "Relevant experience", "Visionary leadership", "Flexibility", "Emotional intelligence"]
 
 rec_hum = defaultdict(lambda: defaultdict(list))
 
@@ -200,9 +197,7 @@ for df in df_hum.values():
     all_rows.extend(df.to_dict(orient="records"))
 
 df_all = pd.DataFrame(all_rows)
-average_by_field = df_all.groupby("Campo")["Media"].mean().reset_index()
-average_by_field = average_by_field.set_index("Campo").reindex(campos_hum)
-
+average_by_field = df2[individual_columns].mean().tolist()
 
 sorted_founders = sorted(df_hum)
 
@@ -216,7 +211,7 @@ for i in range(0, len(sorted_founders), 2):
 
             if not data.empty:
                 # Ordenar para alinear con el promedio
-                data = data.set_index("Campo").reindex(average_by_field.index).reset_index()
+                data = data.set_index("Campo").reindex(campos_hum).reset_index()
 
                 fig = go.Figure()
 
@@ -232,8 +227,8 @@ for i in range(0, len(sorted_founders), 2):
 
                 # Trace promedio
                 fig.add_trace(go.Scatterpolar(
-                    r=average_by_field["Media"].tolist() + [average_by_field["Media"].iloc[0]],
-                    theta=average_by_field.index.tolist() + [average_by_field.index[0]],
+                    r=average_by_field + [average_by_field[0]],
+                    theta=campos_hum + [campos_hum[0]],
                     fill='toself',
                     name="Average",
                     line=dict(color="orange"),
