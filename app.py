@@ -140,6 +140,8 @@ if filtered.empty:
 row = filtered.iloc[0]
 
 #======================Comenzamos con Individual========================
+st.markdown("<h1 style='text-align: center;'>Human DD</h1>", unsafe_allow_html=True)
+
 
 individual_columns = [
     "Purpose | Average",
