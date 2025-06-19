@@ -99,8 +99,59 @@ def get_founder_id(val):
 st.set_page_config(
     page_title="Startup Program Feedback Dashboard",
     page_icon=".streamlit/static/favicon.png",  # or "🚀", or "📊", or a path to a .png
-    layout="wide"
+    layout="centered"
+
 )
+
+st.markdown("""
+<style>
+@media print {
+    div[data-baseweb="select"] {
+        display: none !important;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+st.markdown("""
+<style>
+/* Reduce al mínimo el padding horizontal entre columnas */
+[data-testid="column"] {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+    margin: 0 !important;
+}
+
+/* Alinea contenido de las columnas al top */
+[data-testid="column"] > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+/* Ajusta zoom y márgenes para impresión A4 */
+@media print {
+    html, body {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        zoom: 90%;  /* ajusta si hace falta más espacio */
+    }
+
+    .element-container {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    @page {
+        size: A4 portrait;
+        margin: 10mm 10mm 10mm 10mm;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
 
 AIRTABLE_PAT = st.secrets["airtable"]["api_key"]
 BASE_ID = st.secrets["airtable"]["base_id"]
@@ -192,14 +243,14 @@ with col2:
         theta=risk_reward_df["Category"].tolist() + [risk_reward_df["Category"].iloc[0]],
         fill='toself',
         name="Risk & Reward",
+        line=dict(color='skyblue'),
+        fillcolor="rgba(135, 206, 235, 0.3)"
     ))
     fig.add_trace(go.Scatterpolar(
         r=averages_rr_df["Score"].tolist() + [averages_rr_df["Score"].iloc[0]],
         theta=averages_rr_df["Category"].tolist() + [averages_rr_df["Category"].iloc[0]],
-        fill='toself',
         name="Average",
         line=dict(color='orange'),
-        fillcolor='rgba(255,265,0,0.4)'
     ))
 
     fig.update_layout(
@@ -405,14 +456,3 @@ with col1:
     render_flags_by_mentor(row, 0, 1)
 
 render_flags_by_mentor(row, 1, limit=None)
-
-team_scores = {
-    "Conflict resolution": row.get("Conflict resolution | Average"),
-    "Clear vision alignment": row.get("Clear vision alignment | Average"),
-    "Clear roles": row.get("Clear roles | Average"),
-    "Complementary hard skills": row.get("Complementary hard skills | Average"),
-    "Execution and speed": row.get("Execution and speed | Average"),
-    "Team ambition": row.get("Team ambition | Average"),
-    "Confidence and mutual respect": row.get("Confidence and mutual respect | Average"),
-    "Product and customer focus": row.get("Product and Customer Focus | Average")
-}
