@@ -97,8 +97,57 @@ def get_founder_id(val):
 st.set_page_config(
     page_title="Startup Program Feedback Dashboard",
     page_icon=".streamlit/static/favicon.png",  # or "🚀", or "📊", or a path to a .png
-    layout="wide"
+    layout="centered"
 )
+st.markdown("""
+<style>
+@media print {
+    div[data-baseweb="select"] {
+        display: none !important;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+st.markdown("""
+<style>
+/* Reduce al mínimo el padding horizontal entre columnas */
+[data-testid="column"] {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+    margin: 0 !important;
+}
+
+/* Alinea contenido de las columnas al top */
+[data-testid="column"] > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+/* Ajusta zoom y márgenes para impresión A4 */
+@media print {
+    html, body {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        zoom: 90%;  /* ajusta si hace falta más espacio */
+    }
+
+    .element-container {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    @page {
+        size: A4 portrait;
+        margin: 10mm 10mm 10mm 10mm;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
 
 AIRTABLE_PAT = st.secrets["airtable"]["api_key"]
 BASE_ID = st.secrets["airtable"]["base_id"]
@@ -127,7 +176,7 @@ df["Id"] = df["Id"].astype(str)
 # Dropdown de st's
 valid_ids = [id_ for id_ in df["Id"].unique() if id_ in id_to_name]
 selected_id = st.selectbox(
-    "Choose a Startup",
+    "",
     options=sorted(valid_ids, key=int),
     format_func=lambda x: id_to_name.get(x, f"Startup {x}")
 )
@@ -140,7 +189,8 @@ if filtered.empty:
 row = filtered.iloc[0]
 
 #======================Comenzamos con Individual========================
-st.markdown("<h1 style='text-align: center;'>Human DD</h1>", unsafe_allow_html=True)
+startup_name = id_to_name.get(selected_id, f"Startup {selected_id}")
+st.markdown(f"**<h4 style='text-align: center;'>Human DD: {startup_name}</h4>**", unsafe_allow_html=True)
 
 
 individual_columns = [
@@ -171,7 +221,7 @@ table_emo = normalize_list(row.get("Emotional intelligence | Founder & Score", [
 tags_emo = [p.strip() for entry in table_emo for p in entry.split(", ")]
 
 list_hum = [tags_purp, tags_int, tags_rel, tags_vis, tags_flex, tags_emo]
-campos_hum = ["Purpose", "Integrity and honesty", "Relevant experience", "Visionary leadership", "Flexibility", "Emotional intelligence"]
+campos_hum = ["Purpose", "Integrity<br>and honesty", "Relevant<br>experience", "Visionary<br>leadership", "Flexibility", "Emotional<br>intelligence"]
 
 rec_hum = defaultdict(lambda: defaultdict(list))
 
@@ -204,7 +254,7 @@ average_by_field = df2[individual_columns].mean().tolist()
 sorted_founders = sorted(df_hum)
 
 for i in range(0, len(sorted_founders), 2):
-    cols = st.columns(2)
+    cols = st.columns([1,1], gap="large")
     
     for j in range(2):
         if i + j < len(sorted_founders):
@@ -223,18 +273,16 @@ for i in range(0, len(sorted_founders), 2):
                     theta=data["Campo"].tolist() + [data["Campo"].iloc[0]],
                     fill='toself',
                     name=nombre,
-                    line=dict(color="rgb(52, 199, 89)"),
-                    fillcolor='rgba(52, 199, 89, 0.3)'
+                    line=dict(color='skyblue'),
+                    fillcolor="rgba(135, 206, 235, 0.3)"
                 ))
 
                 # Trace promedio
                 fig.add_trace(go.Scatterpolar(
                     r=average_by_field + [average_by_field[0]],
                     theta=campos_hum + [campos_hum[0]],
-                    fill='toself',
                     name="Average",
-                    line=dict(color="orange"),
-                    fillcolor='rgba(255,165,0,0.2)'
+                    line=dict(color="orange")
                 ))
 
                 # Layout
@@ -249,24 +297,27 @@ for i in range(0, len(sorted_founders), 2):
                         radialaxis=dict(
                             visible=True,
                             range=[0, 4]
+                        ),
+                        angularaxis=dict(
+                            tickfont=dict(size=11)
                         )
                     ),
                     showlegend=True,
                     legend=dict(
                         orientation="h",
                         yanchor="bottom",
-                        y=-0.2,
+                        y=-0.35,
                         xanchor="center",
                         x=0.5
                     ),
-                    height=500,
-                    margin=dict(t=60, b=80)
+                    height=320,
+                    margin=dict(t=60, b=50, l=50, r=50)
                 )
 
                 with cols[j]:
                     st.plotly_chart(fig, use_container_width=True, key=f"fig_{i+j}")
 
-col1, col2 = st.columns(2)
+col1, col2 = st.columns([1,1], gap="large")
 
 with col1:
     startup_ut_talks = normalize_list(row.get("Talks | Unconventional thinking (Founder & Score)", []))
@@ -292,12 +343,14 @@ with col1:
                 scores_count_ut[nombre]["Red Flag"] += 1
 
     if scores_count_ut:
-        st.subheader("🧠 Unconventional Thinking")
+        st.markdown("**🧠 Unconventional Thinking**")
         for nombre in sorted(scores_count_ut):
-            st.markdown(f"**{nombre}**")
+            st.markdown(f"{nombre}")
             col_bonus, col_red = st.columns(2)
-            col_bonus.metric("⭐ Bonus Star", int(scores_count_ut[nombre]["Bonus Star"]))
-            col_red.metric("🚩 Red Flag",    int(scores_count_ut[nombre]["Red Flag"]))
+            with col_bonus:
+                st.markdown(f"⭐ Bonus Star: {int(scores_count_ut[nombre]['Bonus Star'])}")
+            with col_red:
+                st.markdown(f"🚩 Red Flag: {int(scores_count_ut[nombre]['Red Flag'])}")
 
     # --------Ambition y Confidence (de Individual Contest)----------------------------
 
@@ -332,12 +385,14 @@ with col1:
 
     for title, score_dict in zip(["Confidence", "Ambition"], [scores_count_conf, scores_count_amb]):
         if score_dict:
-            st.subheader(title)
+            st.markdown(f"**{title}**")
             for nombre in sorted(score_dict):
-                st.markdown(f"**{nombre}**")
+                st.markdown(f"{nombre}")
                 col_bonus, col_red = st.columns(2)
-                col_bonus.metric("⭐ Bonus Star", int(score_dict[nombre]["Bonus Star"]))
-                col_red.metric("🚩 Red Flag", int(score_dict[nombre]["Red Flag"]))
+                with col_bonus:
+                    st.markdown(f"⭐ Bonus Star: {int(score_dict[nombre]['Bonus Star'])}")
+                with col_red:
+                    st.markdown(f"🚩 Red Flag: {int(score_dict[nombre]['Red Flag'])}")
 
 with col2:
     team_fields = [
@@ -354,14 +409,14 @@ with col2:
     team_averages = df2[team_fields].mean().tolist()
 
     team_scores = {
-    "Conflict resolution": row.get("Conflict resolution | Average"),
-    "Clear vision alignment": row.get("Clear vision alignment | Average"),
+    "Conflict<br>resolution": row.get("Conflict resolution | Average"),
+    "Clear vision<br>alignment": row.get("Clear vision alignment | Average"),
     "Clear roles": row.get("Clear roles | Average"),
-    "Complementary hard skills": row.get("Complementary hard skills | Average"),
-    "Execution and speed": row.get("Execution and speed | Average"),
-    "Team ambition": row.get("Team ambition | Average"),
-    "Confidence and mutual respect": row.get("Confidence and mutual respect | Average"),
-    "Product and customer focus": row.get("Product and Customer Focus | Average")
+    "Complementary<br>hard skills": row.get("Complementary hard skills | Average"),
+    "Execution<br>and speed": row.get("Execution and speed | Average"),
+    "Team<br>ambition": row.get("Team ambition | Average"),
+    "Confidence and<br>mutual respect": row.get("Confidence and mutual respect | Average"),
+    "Product and<br>customer focus": row.get("Product and Customer Focus | Average")
     }
 
     labels = list(team_scores.keys())
@@ -374,17 +429,15 @@ with col2:
         theta=labels + [labels[0]],
         fill='toself',
         name='Team',
-        line=dict(color='royalblue'),
-        fillcolor='rgba(65, 105, 225, 0.3)'
+        line=dict(color="skyblue"),
+        fillcolor="rgba(135, 206, 235, 0.3)"
     ))
 
     fig.add_trace(go.Scatterpolar(
         r=team_averages + [team_averages[0]],
         theta=labels + [labels[0]],
-        fill='toself',
         name='Average',
-        line=dict(color='orange'),
-        fillcolor='rgba(255,165,0,0.2)'
+        line=dict(color='orange')
     ))
 
     fig.update_layout(
@@ -398,18 +451,21 @@ with col2:
                 radialaxis=dict(
                     visible=True,
                     range=[0, 4]
-                )
+                ),
+                    angularaxis=dict(
+                        tickfont=dict(size=11)
+                    )
             ),
             showlegend=True,
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
-                y=-0.2,
+                y=-0.35,
                 xanchor="center",
                 x=0.5
             ),
-            height=500,
-            margin=dict(t=60, b=80)
+            height=320,
+            margin=dict(t=60, b=50, l=50, r=50)
         )
     
     st.plotly_chart(fig, use_container_width=True)
