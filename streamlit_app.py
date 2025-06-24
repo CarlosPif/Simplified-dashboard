@@ -190,7 +190,7 @@ if filtered.empty:
 row = filtered.iloc[0]
 
 # =========Primera fila de arañas============
-st.markdown("<h1 style='text-align: center;'>Bussiness DD</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>Business DD</h1>", unsafe_allow_html=True)
 
 
 col1, col2 = st.columns([1, 1])
