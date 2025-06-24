@@ -411,7 +411,7 @@ with col1:
         return records
 
     # === Pinta cada mentor y su lista de flags con puntuaciones
-    st.markdown("#### 🚩 EM's Feedback")
+    st.markdown(f"<h4 style='text-align: center;'>EM's Feedback</h4>", unsafe_allow_html=True)
 
     def render_flags_by_mentor(row, start, limit):
 
