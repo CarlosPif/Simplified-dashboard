@@ -199,7 +199,8 @@ individual_columns = [
     "Relevant experience | Average",
     "Visionary leadership | Average",
     "Flexibility | Average",
-    "Emotional intelligence | Average"
+    "Emotional intelligence | Average",
+    "Openness | Average"
 ]
 
 table_purp = normalize_list(row.get("Purpose | Founder & Score", []))
@@ -220,8 +221,11 @@ tags_flex = [p.strip() for entry in table_flex for p in entry.split(", ")]
 table_emo = normalize_list(row.get("Emotional intelligence | Founder & Score", []))
 tags_emo = [p.strip() for entry in table_emo for p in entry.split(", ")]
 
-list_hum = [tags_purp, tags_int, tags_rel, tags_vis, tags_flex, tags_emo]
-campos_hum = ["Purpose", "Integrity<br>and honesty", "Relevant<br>experience", "Visionary<br>leadership", "Flexibility", "Emotional<br>intelligence"]
+table_open = normalize_list(row.get("Openness | Founder & Score", []))
+tags_open = [p.strip() for entry in table_open for p in entry.split(", ")]
+
+list_hum = [tags_purp, tags_int, tags_rel, tags_vis, tags_flex, tags_emo, tags_open]
+campos_hum = ["Purpose", "Integrity<br>and honesty", "Relevant<br>experience", "Visionary<br>leadership", "Flexibility", "Emotional<br>intelligence", "Openness"]
 
 rec_hum = defaultdict(lambda: defaultdict(list))
 
