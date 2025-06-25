@@ -26,8 +26,6 @@ id_to_name = {
     "19": "Anyformat",
     "21": "Valerdat",
     "22": "Kestrix Ltd.",
-    "23": "LingLoop (Menorca)",
-    "24": "Stand Up (Menorca)",
     "26": "Gaddex",
     "27": "Sheldonn",
     "28": "Vixiees",
